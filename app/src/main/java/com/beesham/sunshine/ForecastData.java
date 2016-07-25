@@ -1,5 +1,6 @@
 package com.beesham.sunshine;
 
+import android.net.Uri;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -17,15 +18,43 @@ public class ForecastData {
     HttpURLConnection urlConnection;
     BufferedReader reader;
     String forecastJsonStr = null;
+    private Uri forecastUri;
+
+    private final String FORECAST_BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily?";
+    private final String QUERY_PARAM = "q";
+    private final String FORMAT_PARAM = "mode";
+    private final String UNITS_PARAM = "units";
+    private final String DAYS_PARAM = "cnt";
+    private final String APPID_PARAM = "APPID";
+
+    String format = "json";
+    String units = "metric";
+    int numDays = 7;
+
+    private final String LOG_TAG = ForecastData.this.getClass().getSimpleName();
+
+    String API_KEY = "{001b70e1ffd09055343366e829eb2486}";
 
     public void ForecastData(){}
 
-    public String getData(){
+    public String getData(String... params){
         try{
             // Construct the URL for the OpenWeatherMap query
             // Possible parameters are avaiable at OWM's forecast API page, at
             // http://openweathermap.org/API#forecast
-            URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=94043&mode=json&units=metric&cnt=7");
+            //URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=94043&mode=json&units=metric&cnt=7&APPID="+API_KEY);
+
+            forecastUri = forecastUri.parse(FORECAST_BASE_URL).buildUpon()
+                    .appendQueryParameter(QUERY_PARAM,params[0])
+                    .appendQueryParameter(FORMAT_PARAM, format)
+                    .appendQueryParameter(UNITS_PARAM, units)
+                    .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
+                    .appendQueryParameter(APPID_PARAM, BuildConfig.OPEN_WEATHER_API_KEY)
+                    .build();
+
+            URL url = new URL(forecastUri.toString());
+
+            Log.v(LOG_TAG,"Built URI " + forecastUri.toString());
 
             // Create the request to OpenWeatherMap, and open the connection
             urlConnection = (HttpURLConnection) url.openConnection();
@@ -54,6 +83,7 @@ public class ForecastData {
                 return null;
             }
             forecastJsonStr = buffer.toString();
+            Log.v(LOG_TAG,"Forecast JSON String: " + forecastJsonStr);
         }
         catch(IOException e){
             Log.e("PlaceholderFragment", "Error ", e);
@@ -69,10 +99,11 @@ public class ForecastData {
                 try {
                     reader.close();
                 } catch (final IOException e) {
-                    Log.e("PlaceholderFragment", "Error closing stream", e);
+                    Log.e(LOG_TAG, "Error closing stream", e);
                 }
             }
         }
+
         return forecastJsonStr;
     }
 
