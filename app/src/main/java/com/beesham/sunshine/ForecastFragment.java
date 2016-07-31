@@ -1,6 +1,7 @@
 package com.beesham.sunshine;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,8 +14,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -22,6 +25,7 @@ import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Set;
 
 
 /**
@@ -106,6 +110,19 @@ public class ForecastFragment extends Fragment {
         forcastLV = (ListView) rootView.findViewById(R.id.listView_forcast);
         forcastLV.setAdapter(forecastArrayAdapter);
 
+        forcastLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.v(LOG_TAG,forcastLV.getAdapter().getItem(position).toString());
+                String forecast = forcastLV.getAdapter().getItem(position).toString();
+                Toast.makeText(getActivity(),forcastLV.getAdapter().getItem(position).toString(),Toast.LENGTH_SHORT).show();
+                Intent i = new Intent(getActivity(), DetailActivity.class)
+                        .putExtra(Intent.EXTRA_TEXT, forecast);
+                startActivity(i);
+
+            }
+        });
+
         // Inflate the layout for this fragment
         return rootView;
     }
@@ -125,6 +142,13 @@ public class ForecastFragment extends Fragment {
                 new FetchWeatherTask().execute("94043");
                 Log.d(LOG_TAG,"Executing Refresh");
                 return true;
+
+            case(R.id.action_settings):
+                Log.d(LOG_TAG,"Executing Settings");
+                Intent i = new Intent(getActivity(), SettingsActivity.class);
+                startActivity(i);
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
