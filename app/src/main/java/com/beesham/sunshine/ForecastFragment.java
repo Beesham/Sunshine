@@ -2,9 +2,11 @@ package com.beesham.sunshine;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.format.Time;
 import android.util.Log;
@@ -25,7 +27,6 @@ import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Set;
 
 
 /**
@@ -90,14 +91,7 @@ public class ForecastFragment extends Fragment {
         setHasOptionsMenu(true);
 
         forecastData = new ForecastData();
-
         forcastAL = new ArrayList<>();
-        forcastAL.add("Today - Sunny - 88/63");
-        forcastAL.add("Tomorrow - Foggy - 70/46");
-        forcastAL.add("Weds - Cloudy - 72/63");
-        forcastAL.add("Thur - Rainy - 64/51");
-        forcastAL.add("Fri - Foggy - 70/46");
-        forcastAL.add("Sat - Sunny - 76/68");
 
     }
 
@@ -128,6 +122,12 @@ public class ForecastFragment extends Fragment {
     }
 
     @Override
+    public void onStart(){
+        super.onStart();
+        updateWeather();
+    }
+
+    @Override
     public void onCreateOptionsMenu (Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.forecastfragment, menu);
@@ -139,18 +139,45 @@ public class ForecastFragment extends Fragment {
         Log.d(LOG_TAG,"Menu id: "+Integer.toString(id));
         switch(id){
             case(R.id.action_refresh):
-                new FetchWeatherTask().execute("94043");
+                updateWeather();
                 Log.d(LOG_TAG,"Executing Refresh");
                 return true;
 
             case(R.id.action_settings):
                 Log.d(LOG_TAG,"Executing Settings");
-                Intent i = new Intent(getActivity(), SettingsActivity.class);
-                startActivity(i);
+                startActivity( new Intent(getActivity(), SettingsActivity.class));
+                return true;
+
+            case(R.id.action_viewLocation):
+                Log.d(LOG_TAG,"Executing Viewing location");
+                viewPreferredLocation();
                 return true;
 
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public void updateWeather(){
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = sharedPreferences.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+        Log.v(LOG_TAG,"Setting location to: " + location);
+        new FetchWeatherTask().execute(location);
+
+    }
+
+    public void viewPreferredLocation(){
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String postalCode = sharedPreferences.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+
+        Uri geoLocation = Uri.parse("geo:0,0?").buildUpon()
+                .appendQueryParameter("q", postalCode)
+                .build();
+
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        i.setData(geoLocation);
+        if(i.resolveActivity(getActivity().getPackageManager()) != null){
+            startActivity(i);
         }
     }
 
@@ -218,6 +245,17 @@ public class ForecastFragment extends Fragment {
          */
         private String formatHighLows(double high, double low) {
             // For presentation, assume the user doesn't care about tenths of a degree.
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String unitType = sharedPreferences.getString(getString(R.string.pref_temperature_units_key),
+                    getString(R.string.pref_temperature_units_default));
+
+            if(unitType.equals(getString(R.string.pref_units_imperial))){
+                high = (high * 1.8) + 32;
+                low = (low * 1.8) + 32;
+            } else if (!unitType.equals(getString(R.string.pref_units_metric))){
+                Log.d(LOG_TAG, "Unit type not found: " + unitType);
+            }
+
             long roundedHigh = Math.round(high);
             long roundedLow = Math.round(low);
 

@@ -94,6 +94,7 @@ public class DetailFragment extends Fragment {
         switch(id){
             case(R.id.action_settings):
                 Log.d(LOG_TAG,"Executing Settings");
+                startActivity( new Intent(getActivity(), SettingsActivity.class));
                 return true;
 
             default:

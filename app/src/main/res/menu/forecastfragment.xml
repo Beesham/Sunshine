@@ -7,4 +7,7 @@
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         app:showAsAction="never"/>
+    <item android:id="@+id/action_viewLocation"
+        android:title="@string/action_viewLocation"
+        app:showAsAction="never"/>
 </menu>
