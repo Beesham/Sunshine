@@ -1,60 +1,92 @@
 package com.beesham.sunshine;
 
-import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.support.v7.widget.ShareActionProvider;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.beesham.sunshine.data.WeatherContract;
+import com.beesham.sunshine.data.WeatherContract.WeatherEntry;
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link DetailFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link DetailFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class DetailFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+public class DetailFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private final String LOG_TAG = DetailFragment.this.getClass().getSimpleName();
 
-    String forecast;
+    private final String FORECAST_SHARE_HASHTAG = "#SUNSHINE App";
+
+    private ShareActionProvider shareActionProvider;
+    private String mForecast;
+    private Uri mUri;
+
+    private static final int DETAIL_LOADER = 0;
+    static final String DETAIL_URI = "URI";
+
+    private ImageView iconView;
+    private TextView friendlyDateView;
+    private TextView dateView;
+    private TextView descriptionView;
+    private TextView highTempView;
+    private TextView lowTempView;
+    private TextView humidityView;
+    private TextView windView;
+    private TextView pressureView;
+
+
+    private static final String[] DETAIL_COLUMNS = {
+            WeatherEntry.TABLE_NAME + "." + WeatherEntry._ID,
+            WeatherEntry.COLUMN_DATE,
+            WeatherEntry.COLUMN_SHORT_DESC,
+            WeatherEntry.COLUMN_MAX_TEMP,
+            WeatherEntry.COLUMN_MIN_TEMP,
+            WeatherEntry.COLUMN_HUMIDITY,
+            WeatherEntry.COLUMN_PRESSURE,
+            WeatherEntry.COLUMN_WIND_SPEED,
+            WeatherEntry.COLUMN_DEGREES,
+            WeatherEntry.COLUMN_WEATHER_ID,
+            WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING
+    };
+
+
+    private static final int COL_WEATHER_ID = 0;
+    private static final int COL_WEATHER_DATE = 1;
+    private static final int COL_WEATHER_DESC = 2;
+    private static final int COL_WEATHER_MAX_TEMP = 3;
+    private static final int COL_WEATHER_MIN_TEMP = 4;
+    private static final int COL_WEATHER_HUMIDITY = 5;
+    private static final int COL_WEATHER_PRESSURE = 6;
+    private static final int COL_WEATHER_WIND_SPEED = 7;
+    private static final int COL_WEATHER_DEGREES = 8;
+    private static final int COL_WEATHER_CONDITION_ID = 9;
+
+
 
     private OnFragmentInteractionListener mListener;
 
     public DetailFragment() {
-        // Required empty public constructor
+        setHasOptionsMenu(true);
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment DetailFragment.
-     */
-    // TODO: Rename and change types and number of parameters
+
     public static DetailFragment newInstance(String param1, String param2) {
         DetailFragment fragment = new DetailFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -63,16 +95,8 @@ public class DetailFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+
         }
-
-        setHasOptionsMenu(true);
-
-        Intent intent = getActivity().getIntent();
-        forecast = intent.getStringExtra(Intent.EXTRA_TEXT);
-        Log.d(LOG_TAG,forecast);
-
     }
 
     @Override
@@ -81,10 +105,44 @@ public class DetailFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
-        ((TextView) rootView.findViewById(R.id.forecastTV))
-                        .setText(forecast);
+        Bundle arguments = getArguments();
+        if(arguments != null){
+            mUri = arguments.getParcelable(DetailFragment.DETAIL_URI);
+        }
+
+        iconView = (ImageView) rootView.findViewById(R.id.detail_frag_icon);
+        dateView = (TextView) rootView.findViewById(R.id.detail_date_textview);
+        friendlyDateView = (TextView) rootView.findViewById(R.id.detail_date_textview);
+        descriptionView = (TextView) rootView.findViewById(R.id.detail_forecast_textview);
+        highTempView = (TextView) rootView.findViewById(R.id.detail_high_textview);
+        lowTempView = (TextView) rootView.findViewById(R.id.detail_low_textview);
+        humidityView = (TextView) rootView.findViewById(R.id.detail_humidity_textview);
+        pressureView = (TextView) rootView.findViewById(R.id.detail_pressure_textview);
+        windView = (TextView) rootView.findViewById(R.id.detail_wind_textview);
 
         return rootView;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        menuInflater.inflate(R.menu.detailfragment, menu);
+
+        MenuItem menuItem = menu.findItem(R.id.menu_item_share);
+        shareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+
+        if(mForecast != null){
+            shareActionProvider.setShareIntent(createShareForecastIntent());
+        }
+    }
+
+    private Intent createShareForecastIntent(){
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, mForecast + FORECAST_SHARE_HASHTAG);
+
+        return shareIntent;
     }
 
     @Override
@@ -100,6 +158,12 @@ public class DetailFragment extends Fragment {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        getLoaderManager().initLoader(DETAIL_LOADER, null, this);
+        super.onActivityCreated(savedInstanceState);
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -124,6 +188,81 @@ public class DetailFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+
+        if(null != mUri) {
+            return new CursorLoader(
+                    getActivity(),
+                    mUri,
+                    DETAIL_COLUMNS,
+                    null,
+                    null,
+                    null
+            );
+        }
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        Log.v(LOG_TAG, "in onLOadFinished");
+        if(!data.moveToFirst()) {return;}
+
+        int weatherId = data.getInt(COL_WEATHER_CONDITION_ID);
+
+        iconView.setImageResource(Utility.getArtResourceForWeatherCondition(weatherId));
+
+        //Date
+        long date = data.getLong(COL_WEATHER_DATE);
+        String friendlyDateText = Utility.getDayName(getActivity(), date);
+        String dateText = Utility.getFormattedMonthDay(getActivity(), date);
+        friendlyDateView.setText(friendlyDateText);
+        dateView.setText(dateText);
+
+        String weatherDescription = data.getString(COL_WEATHER_DESC);
+        descriptionView.setText(weatherDescription);
+
+        boolean isMetric = Utility.isMetric(getActivity());
+
+        String high = Utility.formatTemperature(getActivity(), data.getDouble(COL_WEATHER_MAX_TEMP), isMetric);
+        highTempView.setText(high);
+
+        String low = Utility.formatTemperature(getActivity(), data.getDouble(COL_WEATHER_MIN_TEMP), isMetric);
+        lowTempView.setText(low);
+
+        float humidity = data.getFloat(COL_WEATHER_HUMIDITY);
+        humidityView.setText(getActivity().getString(R.string.format_humidity, humidity));
+
+        float pressure = data.getFloat(COL_WEATHER_PRESSURE);
+        pressureView.setText(getActivity().getString(R.string.format_pressure, pressure));
+
+        float windSpeedStr = data.getFloat(COL_WEATHER_WIND_SPEED);
+        float windDirStr = data.getFloat(COL_WEATHER_DEGREES);
+        windView.setText(Utility.getFormattedWind(getActivity(), windSpeedStr, windDirStr));
+
+        mForecast = String.format("%s - %s - %s/%s", dateText, weatherDescription, high, low);
+
+        if(shareActionProvider != null){
+            shareActionProvider.setShareIntent(createShareForecastIntent());
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
+    }
+
+    void onLocationChanged(String newLocation){
+        Uri uri = mUri;
+        if(null != uri){
+            long date = WeatherContract.WeatherEntry.getDateFromUri(uri);
+            Uri updateUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(newLocation, date);
+            mUri = updateUri;
+            getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
+        }
     }
 
     /**
