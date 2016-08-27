@@ -148,11 +148,8 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
         int id = item.getItemId();
-        Log.d(LOG_TAG,"Menu id: "+Integer.toString(id));
         switch(id){
             case(R.id.action_settings):
-                Log.d(LOG_TAG,"Executing Settings");
-                startActivity( new Intent(getActivity(), SettingsActivity.class));
                 return true;
 
             default:

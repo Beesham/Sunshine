@@ -1,14 +1,11 @@
 package com.beesham.sunshine;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
+
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -20,8 +17,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.Toast;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.content.CursorLoader;
@@ -92,7 +87,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     private OnFragmentInteractionListener mListener;
 
     public ForecastFragment() {
-        // Required empty public constructor
+        setHasOptionsMenu(true);
     }
 
     public static ForecastFragment newInstance(String param1, String param2) {
@@ -108,8 +103,6 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         if (getArguments() != null) {
 
         }
-
-        setHasOptionsMenu(true);
 
         forecastData = new ForecastData();
         forcastAL = new ArrayList<>();
