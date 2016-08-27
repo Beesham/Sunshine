@@ -1,20 +1,14 @@
 package com.beesham.sunshine;
 
-import android.app.ActionBar;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
+
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.view.Menu;
-import android.view.MenuInflater;
+
+import com.beesham.sunshine.sync.SunshineSyncAdapter;
 
 public class MainActivity extends AppCompatActivity implements ForecastFragment.Callback {
-
-    FragmentManager fragmentManager;
-    FragmentTransaction fragmentTransaction;
 
     private final String DETAILFRAGMENT_TAG = "DFTAG";
     private String mLocation;
@@ -39,12 +33,8 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
         ForecastFragment forecastFragment = ((ForecastFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_forecast));
         forecastFragment.setUseTodayLayout(!mTwoPane);
-//        ForecastFragment placeholder = new ForecastFragment();
-//
-//        fragmentManager = getSupportFragmentManager();
-//        fragmentTransaction = fragmentManager.beginTransaction();
-//        fragmentTransaction.add(R.id.fragment_container, placeholder, FORECASTFRAGMENT_TAG);
-//        fragmentTransaction.commit();
+
+        SunshineSyncAdapter.initializeSyncAdapter(this);
     }
 
     @Override

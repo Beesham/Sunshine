@@ -112,7 +112,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
         iconView = (ImageView) rootView.findViewById(R.id.detail_frag_icon);
         dateView = (TextView) rootView.findViewById(R.id.detail_date_textview);
-        friendlyDateView = (TextView) rootView.findViewById(R.id.detail_date_textview);
+        friendlyDateView = (TextView) rootView.findViewById(R.id.detail_day_textview);
         descriptionView = (TextView) rootView.findViewById(R.id.detail_forecast_textview);
         highTempView = (TextView) rootView.findViewById(R.id.detail_high_textview);
         lowTempView = (TextView) rootView.findViewById(R.id.detail_low_textview);
@@ -227,10 +227,10 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
         boolean isMetric = Utility.isMetric(getActivity());
 
-        String high = Utility.formatTemperature(getActivity(), data.getDouble(COL_WEATHER_MAX_TEMP), isMetric);
+        String high = Utility.formatTemperature(getActivity(), data.getDouble(COL_WEATHER_MAX_TEMP));
         highTempView.setText(high);
 
-        String low = Utility.formatTemperature(getActivity(), data.getDouble(COL_WEATHER_MIN_TEMP), isMetric);
+        String low = Utility.formatTemperature(getActivity(), data.getDouble(COL_WEATHER_MIN_TEMP));
         lowTempView.setText(low);
 
         float humidity = data.getFloat(COL_WEATHER_HUMIDITY);
