@@ -1,10 +1,22 @@
 <resources xmlns:xliff="http://schemas.android.com/tools">
     <string name="app_name">Sunshine</string>
 
+    <string name="empty_list">No Weather Information Available</string>
+
+    <!-- No connectivity error messages -->
+    <string name="no_connectivity">The network is not available to fetch weather data</string>
+    <string name="empty_forecast_list_server_down">No weather information available. The server is not returning data.</string>
+    <string name="empty_forecast_list_server_error">No weather information available. The server is not returning valid data. Please check for an updated version of Sunshine.</string>
+    <string name="empty_forecast_list_invalid_location">No weather information available. The location in settings is not recognized by the weather server</string>
+
     <string name="action_refresh" translatable="false">Refresh</string>
     <string name="action_settings" translatable="false">Settings</string>
     <string name="action_viewLocation" translatable="false">View Location</string>
     <string name="action_share" translatable="false">Share</string>
+
+    <!-- String used when displaying the state of the Location in settings -->
+    <string name="pref_location_error_description">Invalid Location (<xliff:g id="location_setting">%1$s</xliff:g>)"</string>
+    <string name="pref_location_unknown_description">Validating Location... (<xliff:g id="location_setting">%1$s</xliff:g>)"</string>
 
     <!--Preference Values-->
     <string name="pref_location_label">Location</string>
@@ -27,6 +39,8 @@
     <string name="pref_enable_notifications_true">Enabled</string>
     <string name="pref_enable_notifications_false">Not Enabled</string>
     <string name="pref_enable_notifications_default" translatable="false">true</string>
+    
+    <string name="pref_location_status_key" translatable="false">location_status</string>
 
     <!-- Date label when displaying today's weather forecast [CHAR LIMIT=20] -->
     <string name="today">Today</string>
@@ -65,5 +79,11 @@
     </string>
     <!-- Strings related to Notification preference-->
     <string name="pref_last_notification">last_notification</string>
+
+    <!-- Content Descriptions -->
+    <string name="content_description_forecast">Forecast: <xliff:g id="condition">%1$s</xliff:g></string>
+    <string name="content_description_forecast_icon">Forecast icon: <xliff:g id="condition">%1$s</xliff:g></string>
+    <string name="content_description_high_temp">High: <xliff:g id="high">%1$s</xliff:g></string>
+    <string name="content_description_low_temp">Low: <xliff:g id="low">%1$s</xliff:g></string>
 
 </resources>

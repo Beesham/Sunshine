@@ -221,24 +221,31 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
         String weatherDescription = data.getString(COL_WEATHER_DESC);
         descriptionView.setText(weatherDescription);
+        descriptionView.setContentDescription(getString(R.string.content_description_forecast, weatherDescription));
 
         boolean isMetric = Utility.isMetric(getActivity());
 
         String high = Utility.formatTemperature(getActivity(), data.getDouble(COL_WEATHER_MAX_TEMP));
         highTempView.setText(high);
+        highTempView.setContentDescription(getString(R.string.content_description_high_temp, high));
 
         String low = Utility.formatTemperature(getActivity(), data.getDouble(COL_WEATHER_MIN_TEMP));
         lowTempView.setText(low);
+        lowTempView.setContentDescription(getString(R.string.content_description_low_temp, low));
+
 
         float humidity = data.getFloat(COL_WEATHER_HUMIDITY);
         humidityView.setText(getActivity().getString(R.string.format_humidity, humidity));
+        humidityView.setContentDescription(humidityView.getText());
 
         float pressure = data.getFloat(COL_WEATHER_PRESSURE);
         pressureView.setText(getActivity().getString(R.string.format_pressure, pressure));
+        pressureView.setContentDescription(pressureView.getText());
 
         float windSpeedStr = data.getFloat(COL_WEATHER_WIND_SPEED);
         float windDirStr = data.getFloat(COL_WEATHER_DEGREES);
         windView.setText(Utility.getFormattedWind(getActivity(), windSpeedStr, windDirStr));
+        windView.setContentDescription(windView.getText());
 
         mForecast = String.format("%s - %s - %s/%s", dateText, weatherDescription, high, low);
 

@@ -17,8 +17,13 @@ package com.beesham.sunshine;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
+import android.util.Log;
+
+import com.beesham.sunshine.sync.SunshineSyncAdapter;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -243,6 +248,49 @@ public class Utility {
             return R.drawable.art_clouds;
         }
         return -1;
+    }
+
+    /**
+     * Checks for network availability
+     * @param context
+     * @returns true is network is available
+     */
+    public static boolean isOnline(Context context) {
+        Log.v("isOnline", "calling isOnline");
+        ConnectivityManager connMgr = (ConnectivityManager)
+                context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        return (networkInfo != null && networkInfo.isConnected());
+    }
+
+    /**
+     * Get the location status from the prefernce file
+     * @param context
+     * @return
+     */
+    @SuppressWarnings("ResourceType")
+    public static @SunshineSyncAdapter.LocationStatus
+    int getLocationStatus(Context context){
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getInt(context.getString(R.string.pref_location_status_key), SunshineSyncAdapter.LOCATION_STATUS_UNKNOWN);
+    }
+
+    /**
+     * Resets the loaction status to default
+     * @param context
+     */
+    public static void resetLocationStatus(Context context){
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt(context.getString(R.string.pref_location_status_key), SunshineSyncAdapter.LOCATION_STATUS_UNKNOWN)
+                .apply();
+    }
+
+    public static void setLocationStatusToInvalid(Context context){
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt(context.getString(R.string.pref_location_status_key), SunshineSyncAdapter.LOCATION_STATUS_INVALID)
+                .commit();
     }
 
 }

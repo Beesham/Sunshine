@@ -139,6 +139,7 @@ public class ForecastAdapter extends CursorAdapter {
         //Read weather forecast from cursor
         String description = cursor.getString(ForecastFragment.COL_WEATHER_DESC);
         viewHolder.descriptionView.setText(description);
+        viewHolder.descriptionView.setContentDescription(context.getString(R.string.content_description_forecast, description));
 
         // Read user preference for metric or imperial temperature units
         boolean isMetric = Utility.isMetric(context);
@@ -146,9 +147,12 @@ public class ForecastAdapter extends CursorAdapter {
         // Read high temperature from cursor
         double high = cursor.getDouble(ForecastFragment.COL_WEATHER_MAX_TEMP);
         viewHolder.highTempView.setText(Utility.formatTemperature(context, high));
+        viewHolder.highTempView.setContentDescription(context.getString(R.string.content_description_high_temp, Utility.formatTemperature(context, high)));
 
         //Read low temperature from cursor
         double low = cursor.getDouble(ForecastFragment.COL_WEATHER_MIN_TEMP);
         viewHolder.lowTempView.setText(Utility.formatTemperature(context, low));
+        viewHolder.lowTempView.setContentDescription(context.getString(R.string.content_description_low_temp, Utility.formatTemperature(context, low)));
+
     }
 }
