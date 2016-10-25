@@ -23,6 +23,7 @@ import android.widget.TextView;
 
 import com.beesham.sunshine.data.WeatherContract;
 import com.beesham.sunshine.data.WeatherContract.WeatherEntry;
+import com.bumptech.glide.Glide;
 
 
 public class DetailFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -210,7 +211,12 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
         int weatherId = data.getInt(COL_WEATHER_CONDITION_ID);
 
-        iconView.setImageResource(Utility.getArtResourceForWeatherCondition(weatherId));
+        //iconView.setImageResource(Utility.getArtResourceForWeatherCondition(weatherId));
+        Glide.with(this)
+                .load(Utility.getArtResourceForWeatherCondition(weatherId))
+                .error(Utility.getArtResourceForWeatherCondition(weatherId))
+                .crossFade()
+                .into(iconView);
 
         //Date
         long date = data.getLong(COL_WEATHER_DATE);

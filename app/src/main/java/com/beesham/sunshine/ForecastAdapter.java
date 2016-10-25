@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.beesham.sunshine.data.WeatherContract;
+import com.bumptech.glide.Glide;
 
 /**
  * {@link ForecastAdapter} exposes a list of weather forecasts
@@ -118,19 +119,23 @@ public class ForecastAdapter extends CursorAdapter {
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
         int viewType = getItemViewType(cursor.getPosition());
+        int weatherId = cursor.getInt(ForecastFragment.COL_WEATHER_CONDITION_ID);
+        int fallbackIconId = 0;
         switch (viewType){
             case VIEW_TYPE_TODAY:
-                viewHolder.iconView.setImageResource(Utility.getArtResourceForWeatherCondition(
-                        cursor.getInt(ForecastFragment.COL_WEATHER_CONDITION_ID)));
-                Log.v(LOG_TAG, "Today id: " + Integer.toString(cursor.getInt(ForecastFragment.COL_WEATHER_CONDITION_ID)));
+                fallbackIconId = Utility.getArtResourceForWeatherCondition(weatherId);
                 break;
 
             case VIEW_TYPE_FUTURE:
-                viewHolder.iconView.setImageResource(Utility.getIconResourceForWeatherCondition(
-                        cursor.getInt(ForecastFragment.COL_WEATHER_CONDITION_ID)));
-                Log.v(LOG_TAG,  "Future id: " + Integer.toString(cursor.getInt(ForecastFragment.COL_WEATHER_CONDITION_ID)));
+                fallbackIconId = Utility.getIconResourceForWeatherCondition(weatherId);
                 break;
         }
+
+        Glide.with(mContext)
+                .load(Utility.getArtUrlForWeatherCondition(mContext, weatherId))
+                .error(fallbackIconId)
+                .crossFade()
+                .into(viewHolder.iconView);
 
         //Read date from cursor
         long date = cursor.getLong(ForecastFragment.COL_WEATHER_DATE);
