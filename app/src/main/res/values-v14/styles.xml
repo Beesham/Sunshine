@@ -12,8 +12,4 @@
         <item name="android:height">56dp</item>
     </style>
 
-    <style name="Toolbar" parent="Widget.AppCompat.Toolbar">
-        <item name="android:background">?attr/colorPrimary</item>
-        <item name="android:popupTheme">@style/Theme.AppCompat.Light</item>
-    </style>
 </resources>

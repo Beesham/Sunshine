@@ -10,6 +10,8 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -77,27 +79,8 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     private static final int COL_WEATHER_CONDITION_ID = 9;
 
 
-
-    private OnFragmentInteractionListener mListener;
-
     public DetailFragment() {
         setHasOptionsMenu(true);
-    }
-
-
-    public static DetailFragment newInstance(String param1, String param2) {
-        DetailFragment fragment = new DetailFragment();
-        Bundle args = new Bundle();
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-
-        }
     }
 
     @Override
@@ -113,7 +96,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
         iconView = (ImageView) rootView.findViewById(R.id.detail_frag_icon);
         dateView = (TextView) rootView.findViewById(R.id.detail_date_textview);
-        friendlyDateView = (TextView) rootView.findViewById(R.id.detail_day_textview);
+        friendlyDateView = (TextView) rootView.findViewById(R.id.detail_date_textview);
         descriptionView = (TextView) rootView.findViewById(R.id.detail_forecast_textview);
         highTempView = (TextView) rootView.findViewById(R.id.detail_high_textview);
         lowTempView = (TextView) rootView.findViewById(R.id.detail_low_textview);
@@ -126,15 +109,17 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.detailfragment, menu);
-
-        MenuItem menuItem = menu.findItem(R.id.menu_item_share);
-        shareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
-
-        if(mForecast != null){
-            shareActionProvider.setShareIntent(createShareForecastIntent());
+        if ( getActivity() instanceof DetailActivity ){
+            // Inflate the menu; this adds items to the action bar if it is present.
+            menuInflater.inflate(R.menu.detailfragment, menu);
+            finishCreatingMenu(menu);
         }
+    }
+
+    private void finishCreatingMenu(Menu menu) {
+        // Retrieve the share menu item
+        MenuItem menuItem = menu.findItem(R.id.menu_item_share);
+        menuItem.setIntent(createShareForecastIntent());
     }
 
     private Intent createShareForecastIntent(){
@@ -162,30 +147,6 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         getLoaderManager().initLoader(DETAIL_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
-    }
-
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
-    }
-
-    /*@Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
-        }
-    }*/
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
     }
 
     @Override
@@ -258,6 +219,28 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         if(shareActionProvider != null){
             shareActionProvider.setShareIntent(createShareForecastIntent());
         }
+
+        AppCompatActivity activity = (AppCompatActivity)getActivity();
+        Toolbar toolbarView = (Toolbar) getView().findViewById(R.id.toolbar);
+
+        // We need to start the enter transition after the data has loaded
+        if (activity instanceof DetailActivity) {
+            activity.supportStartPostponedEnterTransition();
+
+            if ( null != toolbarView ) {
+                activity.setSupportActionBar(toolbarView);
+
+                activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
+                activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            }
+        } else {
+            if ( null != toolbarView ) {
+                Menu menu = toolbarView.getMenu();
+                if ( null != menu ) menu.clear();
+                toolbarView.inflateMenu(R.menu.detailfragment);
+                finishCreatingMenu(toolbarView.getMenu());
+            }
+        }
     }
 
     @Override
@@ -275,18 +258,4 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         }
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
-    }
 }
