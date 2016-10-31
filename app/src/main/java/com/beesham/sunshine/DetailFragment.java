@@ -11,6 +11,7 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,6 +21,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.support.v7.widget.ShareActionProvider;
+import android.view.ViewParent;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -87,7 +89,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_detail_start, container, false);
 
         Bundle arguments = getArguments();
         if(arguments != null){
@@ -162,6 +164,12 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                     null
             );
         }
+
+        ViewParent viewParent = getView().getParent();
+        if ( viewParent instanceof CardView) {
+            ((View)viewParent).setVisibility(View.INVISIBLE);
+        }
+
         return null;
     }
 
@@ -169,6 +177,11 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         Log.v(LOG_TAG, "in onLOadFinished");
         if(!data.moveToFirst()) {return;}
+
+        ViewParent viewParent = getView().getParent();
+        if ( viewParent instanceof CardView) {
+            ((View)viewParent).setVisibility(View.VISIBLE);
+        }
 
         int weatherId = data.getInt(COL_WEATHER_CONDITION_ID);
 
