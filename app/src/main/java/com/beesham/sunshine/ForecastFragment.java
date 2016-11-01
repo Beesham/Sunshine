@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -17,7 +19,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
+import android.view.ViewTreeObserver;
 import android.widget.ListView;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
@@ -41,13 +43,13 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     private final String LOG_TAG = ForecastFragment.this.getClass().getSimpleName();
 
-    private boolean mUseTodayLayout;
+    private boolean mUseTodayLayout, mAutoSelectView;
 
     private static final int FORECAST_LOADER = 0;
 
-    private ListView forcastLV;
+    private RecyclerView mForcastRecyclerView;
     private TextView mEmptyView;
-    private int mPosition = ListView.INVALID_POSITION;
+    private int mPosition = RecyclerView.NO_POSITION;
 
     private ArrayList<String> forcastAL;
     private ForecastAdapter mForecastAdapter;
@@ -55,6 +57,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     private static  final String SELECTED_KEY = "selected_position";
 
     ForecastData forecastData;
+    private int mChoiceMode;
 
     public interface Callback{
         void onItemSelected(Uri dateUri);
@@ -118,32 +121,29 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         Uri weatherForLocationUri = WeatherContract.WeatherEntry.buildWeatherLocationWithStartDate(locationSetting, System.currentTimeMillis());
 
         final Cursor cur = getActivity().getContentResolver().query(weatherForLocationUri, null, null, null, sortOrder);
-
-        mForecastAdapter = new ForecastAdapter(getActivity(), null, 0);
-
         View rootView = inflater.inflate(R.layout.fragment_forcast, container, false);
-
         mEmptyView = (TextView) rootView.findViewById(R.id.emptyView);
 
-        forcastLV = (ListView) rootView.findViewById(R.id.listView_forcast);
-        forcastLV.setAdapter(mForecastAdapter);
-        forcastLV.setEmptyView(mEmptyView);
-
-        forcastLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mForecastAdapter = new ForecastAdapter(getActivity(), new ForecastAdapter.ForecastAdapterOnClickHandler() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.v(LOG_TAG,forcastLV.getAdapter().getItem(position).toString());
-                Cursor cursor = (Cursor) parent.getItemAtPosition(position);
-                if(cursor != null) {
-                    String locationSetting = Utility.getPreferredLocation(getActivity());
-                    ((Callback) getActivity())
-                            .onItemSelected(WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
-                                    locationSetting, cursor.getLong(COL_WEATHER_DATE)));
-                }
-            mPosition = position;
-            }
-        });
+            public void onClick(Long date, ForecastAdapter.ForecastAdapterViewHolder forecastAdapterViewHolder) {
+                String locationSetting = Utility.getPreferredLocation(getActivity());
+                ((Callback) getActivity())
+                        .onItemSelected(WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
+                                locationSetting, date));
 
+                mPosition = forecastAdapterViewHolder.getAdapterPosition();
+            }
+        }, mEmptyView, mChoiceMode);
+
+
+
+        mForcastRecyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerView_forcast);
+        mForcastRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+        mForcastRecyclerView.setHasFixedSize(true);
+        mForcastRecyclerView.setAdapter(mForecastAdapter);
 
         if(savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)){
             mPosition = savedInstanceState.getInt(SELECTED_KEY);
@@ -328,13 +328,34 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
         mForecastAdapter.swapCursor(cursor);
-        if(mForecastAdapter.getCount() == 0){
+        if(mForecastAdapter.getItemCount() == 0){
             if(!Utility.isOnline(getActivity())){
                 mEmptyView.setText(getString(R.string.empty_list) + "\n" + getString(R.string.no_connectivity));
             }
         }
         if(mPosition != ListView.INVALID_POSITION){
-            forcastLV.smoothScrollToPosition(mPosition);
+            mForcastRecyclerView.smoothScrollToPosition(mPosition);
+        }
+        if(cursor.getCount() > 0){
+            mForcastRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    // Since we know we're going to get items, we keep the listener around until
+                    // we see Children.
+                    if (mForcastRecyclerView.getChildCount() > 0) {
+                        mForcastRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
+                        int itemPosition = mForecastAdapter.getSelectedItemPosition();
+                        if ( RecyclerView.NO_POSITION == itemPosition ) itemPosition = 0;
+                        RecyclerView.ViewHolder vh = mForcastRecyclerView.findViewHolderForAdapterPosition(itemPosition);
+                        if ( null != vh && mAutoSelectView ) {
+                            mForecastAdapter.selectView( vh );
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+            });
+
         }
     }
 
@@ -361,7 +382,6 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
 
