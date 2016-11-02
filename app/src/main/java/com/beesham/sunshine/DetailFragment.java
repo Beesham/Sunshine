@@ -39,9 +39,11 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     private ShareActionProvider shareActionProvider;
     private String mForecast;
     private Uri mUri;
+    private boolean mTtansitionAnimation;
 
     private static final int DETAIL_LOADER = 0;
     static final String DETAIL_URI = "URI";
+    static final String DETAIL_TRANSITION_ANIMATION = "DTA";
 
     private ImageView iconView;
     private TextView friendlyDateView;
@@ -94,6 +96,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         Bundle arguments = getArguments();
         if(arguments != null){
             mUri = arguments.getParcelable(DetailFragment.DETAIL_URI);
+            mTtansitionAnimation = arguments.getBoolean(DetailFragment.DETAIL_TRANSITION_ANIMATION, false);
         }
 
         iconView = (ImageView) rootView.findViewById(R.id.detail_frag_icon);

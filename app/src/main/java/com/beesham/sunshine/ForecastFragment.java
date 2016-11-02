@@ -34,14 +34,8 @@ import java.util.ArrayList;
 import com.beesham.sunshine.data.WeatherContract;
 import com.beesham.sunshine.sync.SunshineSyncAdapter;
 
-
 /**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link ForecastFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link ForecastFragment#newInstance} factory method to
- * create an instance of this fragment.
+ *
  */
 public class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -57,6 +51,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     private ArrayList<String> forcastAL;
     private ForecastAdapter mForecastAdapter;
+    private boolean mHoldForTransition;
 
     private static  final String SELECTED_KEY = "selected_position";
 
@@ -64,7 +59,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     private int mChoiceMode;
 
     public interface Callback{
-        void onItemSelected(Uri dateUri);
+        void onItemSelected(Uri dateUri, ForecastAdapter.ForecastAdapterViewHolder viewHolder);
     }
 
     private static final String[] FORECAST_COLUMNS ={
@@ -97,13 +92,6 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         setHasOptionsMenu(true);
     }
 
-    public static ForecastFragment newInstance(String param1, String param2) {
-        ForecastFragment fragment = new ForecastFragment();
-        Bundle args = new Bundle();
-        fragment.setArguments(args);
-        return fragment;
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,15 +104,16 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     }
 
-    /*@Override
+    @Override
     public void onInflate(Activity activity, AttributeSet attrs, Bundle savedInstanceState) {
         super.onInflate(activity, attrs, savedInstanceState);
         TypedArray a = activity.obtainStyledAttributes(attrs, R.styleable.ForecastFragment,
                 0, 0);
         mChoiceMode = a.getInt(R.styleable.ForecastFragment_android_choiceMode, AbsListView.CHOICE_MODE_NONE);
         mAutoSelectView = a.getBoolean(R.styleable.ForecastFragment_autoSelectView, false);
+        mHoldForTransition = a.getBoolean(R.styleable.ForecastFragment_sharedElementTransitions, false);
         a.recycle();
-    }*/
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -144,7 +133,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 String locationSetting = Utility.getPreferredLocation(getActivity());
                 ((Callback) getActivity())
                         .onItemSelected(WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
-                                locationSetting, date));
+                                locationSetting, date), forecastAdapterViewHolder);
 
                 mPosition = forecastAdapterViewHolder.getAdapterPosition();
             }
@@ -189,6 +178,9 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
+        if(mHoldForTransition){
+            getActivity().supportPostponeEnterTransition();
+        }
         getLoaderManager().initLoader(FORECAST_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
     }
@@ -217,11 +209,6 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         int id = item.getItemId();
         Log.d(LOG_TAG,"Menu id: "+Integer.toString(id));
         switch(id){
-//            case(R.id.action_refresh):
-//                updateWeather();
-//                Log.d(LOG_TAG,"Executing Refresh");
-//                return true;
-
             case(R.id.action_settings):
                 Log.d(LOG_TAG,"Executing Settings");
                 startActivity( new Intent(getActivity(), SettingsActivity.class));
@@ -247,8 +234,6 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     public void viewPreferredLocation(){
-
-        String postalCode = Utility.getPreferredLocation(getActivity());
 
         if(null != mForecastAdapter){
             Cursor cursor = mForecastAdapter.getCursor();
@@ -350,7 +335,9 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         if(mPosition != ListView.INVALID_POSITION){
             mForcastRecyclerView.smoothScrollToPosition(mPosition);
         }
-        if(cursor.getCount() > 0){
+        if(cursor.getCount() == 0) {
+            getActivity().supportStartPostponedEnterTransition();
+        }else{
             mForcastRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
                 @Override
                 public boolean onPreDraw() {
@@ -363,6 +350,9 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                         RecyclerView.ViewHolder vh = mForcastRecyclerView.findViewHolderForAdapterPosition(itemPosition);
                         if ( null != vh && mAutoSelectView ) {
                             mForecastAdapter.selectView( vh );
+                        }
+                        if(mHoldForTransition){
+                            getActivity().supportStartPostponedEnterTransition();
                         }
                         return true;
                     }
