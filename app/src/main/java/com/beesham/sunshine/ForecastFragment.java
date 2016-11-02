@@ -1,17 +1,20 @@
 package com.beesham.sunshine;
 
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,6 +23,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.AbsListView;
 import android.widget.ListView;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
@@ -112,16 +116,26 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     }
 
+    /*@Override
+    public void onInflate(Activity activity, AttributeSet attrs, Bundle savedInstanceState) {
+        super.onInflate(activity, attrs, savedInstanceState);
+        TypedArray a = activity.obtainStyledAttributes(attrs, R.styleable.ForecastFragment,
+                0, 0);
+        mChoiceMode = a.getInt(R.styleable.ForecastFragment_android_choiceMode, AbsListView.CHOICE_MODE_NONE);
+        mAutoSelectView = a.getBoolean(R.styleable.ForecastFragment_autoSelectView, false);
+        a.recycle();
+    }*/
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        String locationSetting = Utility.getPreferredLocation(getActivity());
+        //String locationSetting = Utility.getPreferredLocation(getActivity());
 
-        String sortOrder = WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
-        Uri weatherForLocationUri = WeatherContract.WeatherEntry.buildWeatherLocationWithStartDate(locationSetting, System.currentTimeMillis());
+      //  String sortOrder = WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
+       // Uri weatherForLocationUri = WeatherContract.WeatherEntry.buildWeatherLocationWithStartDate(locationSetting, System.currentTimeMillis());
 
-        final Cursor cur = getActivity().getContentResolver().query(weatherForLocationUri, null, null, null, sortOrder);
-        View rootView = inflater.inflate(R.layout.fragment_forcast, container, false);
+//        final Cursor cur = getActivity().getContentResolver().query(weatherForLocationUri, null, null, null, sortOrder);
+        final View rootView = inflater.inflate(R.layout.fragment_forcast, container, false);
         mEmptyView = (TextView) rootView.findViewById(R.id.emptyView);
 
         mForecastAdapter = new ForecastAdapter(getActivity(), new ForecastAdapter.ForecastAdapterOnClickHandler() {
@@ -145,6 +159,24 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         mForcastRecyclerView.setHasFixedSize(true);
         mForcastRecyclerView.setAdapter(mForecastAdapter);
 
+        final View parallaxView = rootView.findViewById(R.id.parallax_bar);
+        if(parallaxView != null) {
+         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+             mForcastRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                 @Override
+                 public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                     super.onScrolled(recyclerView, dx, dy);
+                     int max = parallaxView.getHeight();
+                     if(dy > 0){
+                         parallaxView.setTranslationY(Math.max(-max, parallaxView.getTranslationY() - dy /2));
+                     }else{
+                         parallaxView.setTranslationY(Math.min(0, parallaxView.getTranslationY() - dy /2));
+                     }
+                 }
+             });
+         }
+        }
+
         if(savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)){
             mPosition = savedInstanceState.getInt(SELECTED_KEY);
         }
@@ -156,7 +188,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+    public void onActivityCreated(Bundle savedInstanceState) {
         getLoaderManager().initLoader(FORECAST_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
     }
@@ -174,7 +206,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        if(mPosition != ListView.INVALID_POSITION){
+        if(mPosition != RecyclerView.NO_POSITION){
             outState.putInt(SELECTED_KEY, mPosition);
         }
         super.onSaveInstanceState(outState);
@@ -284,28 +316,10 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         }
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
-    }
-
     @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-      /*  if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
-        }*/
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
+    public void onDestroy() {
+        super.onDestroy();
+        if(mForcastRecyclerView != null) mForcastRecyclerView.clearOnScrollListeners();
     }
 
     @Override
