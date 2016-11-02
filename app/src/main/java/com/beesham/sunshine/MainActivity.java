@@ -6,6 +6,8 @@ import android.net.Uri;
 
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -100,7 +102,9 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
         }else{
             Intent intent = new Intent(this, DetailActivity.class)
                     .setData(contentUri);
-            startActivity(intent);
+
+            ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(this);
+            ActivityCompat.startActivity(this, intent, optionsCompat.toBundle());
         }
     }
 
