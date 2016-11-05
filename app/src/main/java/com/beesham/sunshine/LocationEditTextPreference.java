@@ -1,5 +1,6 @@
 package com.beesham.sunshine;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -14,6 +15,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.location.places.ui.PlacePicker;
 
 /**
  * Created by Beesham on 10/21/2016.
@@ -23,6 +31,7 @@ public class LocationEditTextPreference extends EditTextPreference{
 
     private static final String LOG_TAG = LocationEditTextPreference.class.getSimpleName();
 
+    static final int PLACE_PICKER_REQUEST = 1;
     private static final int DEFAULT_MINIMUM_LOCATION_LENGTH = 2;
     private int mMinLength;
 
@@ -40,6 +49,33 @@ public class LocationEditTextPreference extends EditTextPreference{
             typedArray.recycle();
         }
 
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(getContext());
+        if(resultCode == ConnectionResult.SUCCESS){
+            setWidgetLayoutResource(R.layout.pref_current_location);
+        }
+
+    }
+
+    @Override
+    protected View onCreateView(ViewGroup parent) {
+        View view = super.onCreateView(parent);
+        View currentLocation = view.findViewById(R.id.current_location);
+        currentLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+                Activity settingsActivity = (SettingsActivity) getContext();
+                try{
+                    settingsActivity.startActivityForResult(builder.build(settingsActivity), PLACE_PICKER_REQUEST);
+                }catch (GooglePlayServicesNotAvailableException |
+                        GooglePlayServicesRepairableException e){
+                    Log.e(LOG_TAG, "GooglePlay stopped", e);
+                }
+            }
+        });
+
+        return view;
     }
 
     @Override

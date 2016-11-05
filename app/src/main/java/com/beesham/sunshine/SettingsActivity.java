@@ -14,21 +14,29 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.support.design.widget.Snackbar;
+import android.text.TextUtils;
 import android.view.KeyEvent;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.beesham.sunshine.data.WeatherContract;
 import com.beesham.sunshine.sync.SunshineSyncAdapter;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlacePicker;
+import com.google.android.gms.maps.model.LatLng;
+
+import static java.security.AccessController.getContext;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings.
- * <p>
- * See <a href="http://developer.android.com/design/patterns/settings.html">
- * Android Design: Settings</a> for design guidelines and the <a
- * href="http://developer.android.com/guide/topics/ui/settings.html">Settings
- * API Guide</a> for more information on developing a Settings UI.
+ *
  */
 public class SettingsActivity extends PreferenceActivity
         implements Preference.OnPreferenceChangeListener, SharedPreferences.OnSharedPreferenceChangeListener{
+
+    private ImageView mAttribution;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -38,7 +46,6 @@ public class SettingsActivity extends PreferenceActivity
         bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_location_key)));
         bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_temperature_units_key)));
         bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_art_pack_key)));
-
     }
 
     /**
@@ -58,8 +65,30 @@ public class SettingsActivity extends PreferenceActivity
                         .getString(preference.getKey(), ""));
     }
 
+    // Registers a shared preference change listener that gets notified when preferences change
+    @Override
+    protected void onResume() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        sp.registerOnSharedPreferenceChangeListener(this);
+        super.onResume();
+    }
+
+    // Unregisters a shared preference change listener
+    @Override
+    protected void onPause() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        sp.unregisterOnSharedPreferenceChangeListener(this);
+        super.onPause();
+    }
+
+
     @Override
     public boolean onPreferenceChange(Preference preference, Object value) {
+        setPreferenceSummary(preference, value);
+        return true;
+    }
+
+    private void setPreferenceSummary(Preference preference, Object value) {
         String stringValue = value.toString();
         String key = preference.getKey();
 
@@ -71,29 +100,29 @@ public class SettingsActivity extends PreferenceActivity
             if (prefIndex >= 0) {
                 preference.setSummary(listPreference.getEntries()[prefIndex]);
             }
-        } else if(key.equals(getString(R.string.pref_location_key))){
-            // For other preferences, set the summary to the value's simple string representation.
+        } else if (key.equals(getString(R.string.pref_location_key))) {
             @SunshineSyncAdapter.LocationStatus int status = Utility.getLocationStatus(this);
-            switch(status) {
+            switch (status) {
                 case SunshineSyncAdapter.LOCATION_STATUS_OK:
                     preference.setSummary(stringValue);
                     break;
-
                 case SunshineSyncAdapter.LOCATION_STATUS_UNKNOWN:
                     preference.setSummary(getString(R.string.pref_location_unknown_description, value.toString()));
                     break;
-
                 case SunshineSyncAdapter.LOCATION_STATUS_INVALID:
                     preference.setSummary(getString(R.string.pref_location_error_description, value.toString()));
                     break;
-
                 default:
+                    // Note --- if the server is down we still assume the value
+                    // is valid
                     preference.setSummary(stringValue);
             }
+        } else {
+            // For other preferences, set the summary to the value's simple string representation.
+            preference.setSummary(stringValue);
         }
-        return true;
-    }
 
+    }
 
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -105,10 +134,69 @@ public class SettingsActivity extends PreferenceActivity
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if(key.equals(getString(R.string.pref_location_key))){
+
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.remove(getString(R.string.pref_location_latitude));
+            editor.remove(getString(R.string.pref_location_longitude));
+
+            //Remove attributions for any PlacePicker locations
+            if(mAttribution != null){
+                mAttribution.setVisibility(View.GONE);
+            }
+
             Utility.resetLocationStatus(this);
             SunshineSyncAdapter.syncImmediately(this);
         }else if(key.equals(getString(R.string.pref_units_key))){
             getContentResolver().notifyChange(WeatherContract.WeatherEntry.CONTENT_URI, null);
+        }else if ( key.equals(getString(R.string.pref_location_status_key)) ) {
+            // our location status has changed.  Update the summary accordingly
+            Preference locationPreference = findPreference(getString(R.string.pref_location_key));
+            bindPreferenceSummaryToValue(locationPreference);
+        } else if ( key.equals(getString(R.string.pref_art_pack_key)) ) {
+            // art pack have changed. update lists of weather entries accordingly
+            getContentResolver().notifyChange(WeatherContract.WeatherEntry.CONTENT_URI, null);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == LocationEditTextPreference.PLACE_PICKER_REQUEST){
+            if(resultCode == RESULT_OK){
+                Place place = PlacePicker.getPlace(data, this);
+                String address = place.getAddress().toString();
+                LatLng latLng = place.getLatLng();
+
+                if(TextUtils.isEmpty(address)){
+                    address = String.format("(%.2f, %.2f", latLng.latitude, latLng.longitude);
+                }
+
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putString(getString(R.string.pref_location_key), address);
+                editor.putFloat(getString(R.string.pref_location_longitude), (float) latLng.longitude);
+                editor.putFloat(getString(R.string.pref_location_latitude), (float) latLng.latitude);
+                editor.commit();
+
+                Preference locationPreference = findPreference(getString(R.string.pref_location_key));
+                setPreferenceSummary(locationPreference, address);
+
+                // Add attributions for our new PlacePicker location.
+                if (mAttribution != null) {
+                    mAttribution.setVisibility(View.VISIBLE);
+                } /*else {
+                    // For pre-Honeycomb devices, we cannot add a footer, so we will use a snackbar
+                    View rootView = findViewById(android.R.id.content);
+                    Snackbar.make(rootView, getString(R.string.attribution_text),
+                            Snackbar.LENGTH_LONG).show();
+                }*/
+
+
+                Utility.resetLocationStatus(this);
+                SunshineSyncAdapter.syncImmediately(this);
+            }else{
+                super.onActivityResult(requestCode, resultCode, data);
+            }
         }
     }
 }

@@ -13,6 +13,7 @@
     <permission android:name="com.beesham.sunshine.permission.C2D_MESSAGE"
         android:protectionLevel="signature"/>
     <uses-permission android:name="com.beesham.sunshine.permission.C2D_MESSAGE"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
 
     <application
@@ -92,7 +93,9 @@
             android:name=".RegistrationIntentService"
             android:exported="false" >
         </service>
-
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="Place API Key Here"/>
     </application>
 
 </manifest>

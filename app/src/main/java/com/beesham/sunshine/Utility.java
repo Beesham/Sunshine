@@ -31,6 +31,9 @@ import java.util.Date;
 import java.util.Locale;
 
 public class Utility {
+
+    public static float DEFAULT_LATLONG = 0F;
+
     public static String getPreferredLocation(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         return prefs.getString(context.getString(R.string.pref_location_key),
@@ -525,6 +528,27 @@ public class Utility {
                 return context.getString(R.string.condition_unknown, weatherId);
         }
         return context.getString(stringId);
+    }
+
+    /**
+     * Checks if a keys exists for latitude and longitude
+     * @param context
+     * @return
+     */
+    public static boolean isLocationsLatLonAvailable(Context context){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        return preferences.contains(context.getString(R.string.pref_location_latitude))
+                && preferences.contains(context.getString(R.string.pref_location_longitude));
+    }
+
+    public static float getLocationLatitude(Context context){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        return preferences.getFloat(context.getString(R.string.pref_location_latitude), DEFAULT_LATLONG);
+    }
+
+    public static float getLocationLongitude(Context context){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        return preferences.getFloat(context.getString(R.string.pref_location_latitude), DEFAULT_LATLONG);
     }
 
 }

@@ -1,6 +1,7 @@
 package com.beesham.sunshine;
 
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -11,7 +12,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
@@ -164,6 +167,24 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                  }
              });
          }
+        }
+
+        final AppBarLayout appBarLayout = (AppBarLayout) rootView.findViewById(R.id.appbar);
+        if( appBarLayout != null){
+            ViewCompat.setElevation(appBarLayout, 0);
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+                mForcastRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                    @Override
+                    public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                        if(mForcastRecyclerView.computeVerticalScrollOffset() == 0){
+                            appBarLayout.setElevation(0);
+                        }else{
+                            appBarLayout.setElevation(appBarLayout.getTargetElevation());
+                        }
+                    }
+                });
+            }
         }
 
         if(savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)){

@@ -14,6 +14,9 @@
     <string name="action_viewLocation" translatable="false">View Location</string>
     <string name="action_share" translatable="false">Share</string>
 
+    <!-- Content description for the get current location button in the location preference -->
+    <string name="pref_current_location_desc">Use my location</string>
+
     <!-- String used when displaying the state of the Location in settings -->
     <string name="pref_location_error_description">Invalid Location (<xliff:g id="location_setting">%1$s</xliff:g>)"</string>
     <string name="pref_location_unknown_description">Validating Location... (<xliff:g id="location_setting">%1$s</xliff:g>)"</string>
@@ -22,6 +25,10 @@
     <string name="pref_location_label">Location</string>
     <string name="pref_location_key" translatable="false">location</string>
     <string name="pref_location_default" translatable="false">94043</string>
+
+    <!-- Location SharedPreference values lat / long -->
+    <string name="pref_location_latitude">loc-latitude</string>
+    <string name="pref_location_longitude">loc-longitude</string>
 
     <string name="pref_temperature_units_label">Temperature Units</string>
     <string name="pref_temperature_units_key" translatable="false">temperature_units</string>
