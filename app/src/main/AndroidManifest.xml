@@ -46,6 +46,37 @@
             android:exported="false"
             android:syncable="true"/>
 
+        <!-- Muzie Extension -->
+
+        
+        <!-- Today widget -->
+        <receiver android:name=".widget.TodayWidgetProvider"
+            android:label="@string/title_widget_today">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+                <action android:name="com.beesham.sunshine.ACTION_DATA_UPDATED"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_today"/>
+        </receiver>
+        <service android:name=".widget.TodayWidgetIntentService"/>
+
+        <!-- Detail widget -->
+        <receiver android:name=".widget.DetailWidgetProvider"
+            android:label="@string/title_widget_detail"
+            android:enabled="@bool/widget_detail_enabled">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+                <action android:name="com.beesham.sunshine.ACTION_DATA_UPDATED"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_detail"/>
+        </receiver>
+        <service android:name=".widget.DetailWidgetRemoteViewsService"
+            android:exported="false"
+            android:enabled="@bool/widget_detail_enabled"
+            android:permission="android.permission.BIND_REMOTEVIEWS"/>
+
         <service android:name=".sync.SunshineAuthenticatorService">
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator"/>

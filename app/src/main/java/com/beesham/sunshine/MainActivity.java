@@ -14,6 +14,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 
+import com.beesham.sunshine.data.WeatherContract;
 import com.beesham.sunshine.sync.SunshineSyncAdapter;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -35,6 +36,8 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Uri contentUri = getIntent() != null ? getIntent().getData() : null;
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -42,8 +45,16 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
         if(findViewById(R.id.weather_detail_container) != null){
             mTwoPane = true;
             if(savedInstanceState == null){
+
+                DetailFragment fragment = new DetailFragment();
+                if(contentUri != null){
+                    Bundle args = new Bundle();
+                    args.putParcelable(DetailFragment.DETAIL_URI, contentUri);
+                    fragment.setArguments(args);
+                }
+
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.weather_detail_container, new DetailFragment(), DETAILFRAGMENT_TAG);
+                        .replace(R.id.weather_detail_container, fragment, DETAILFRAGMENT_TAG);
             }
         }else{
             mTwoPane = false;
@@ -54,10 +65,13 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
                 .findFragmentById(R.id.fragment_forecast));
         forecastFragment.setUseTodayLayout(!mTwoPane);
 
+        if(contentUri != null){
+            forecastFragment.setInitialSelectedDate(WeatherContract.WeatherEntry.getDateFromUri(contentUri));
+        }
+
         SunshineSyncAdapter.initializeSyncAdapter(this);
 
         if(checkPlayServices()){
-            //TODO: adjust features to match play services availability
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
             boolean sentToken = sharedPreferences.getBoolean(SENT_TOKEN_TO_SERVER, false);
             Log.v(LOG_TAG, "Gonna Send token to server");

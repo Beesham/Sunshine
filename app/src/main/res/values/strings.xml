@@ -5,6 +5,7 @@
 
     <!-- No connectivity error messages -->
     <string name="no_connectivity">The network is not available to fetch weather data</string>
+    <string name="empty_forecast_list">No Weather Information Available</string>
     <string name="empty_forecast_list_server_down">No weather information available. The server is not returning data.</string>
     <string name="empty_forecast_list_server_error">No weather information available. The server is not returning valid data. Please check for an updated version of Sunshine.</string>
     <string name="empty_forecast_list_invalid_location">No weather information available. The location in settings is not recognized by the weather server</string>
@@ -74,6 +75,10 @@
 
     <!-- Value in SharedPreferences for cute dogs art pack  option [CHAR LIMIT=NONE] -->
     <string name="pref_art_pack_cute_dogs" translatable="false">https://raw.githubusercontent.com/udacity/Sunshine-Version-2/sunshine_master/app/src/main/res/drawable-mdpi/art_%s.png</string>
+
+    <!-- Strings related to Widgets -->
+    <string name="title_widget_today">Sunshine Today</string>
+    <string name="title_widget_detail">Sunshine Details</string>
 
 
     <!-- Date label when displaying today's weather forecast [CHAR LIMIT=20] -->

@@ -58,6 +58,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     public final String LOG_TAG = SunshineSyncAdapter.class.getSimpleName();
     public static final int SYNC_INTERVAL = 180; //3 hours, 60 (1 minute)
     public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
+    public static final String ACTION_DATA_UPDATED = "com.beesham.sunshine.ACTION_DATA_UPDATED";
 
     private static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
     private static final int WEATHER_NOTIFICATION_ID = 3004;
@@ -371,6 +372,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                         WeatherContract.WeatherEntry.COLUMN_DATE + "<= ?",
                         new String[] {Long.toString(dayTime.setJulianDay(julianStartDay-1))});
 
+                updateWidgets();
                 notifyWeather();
             }
 
@@ -384,6 +386,12 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         }
     }
 
+    private void updateWidgets(){
+        Context context = getContext();
+        Intent dataUpdatedIntent = new Intent(ACTION_DATA_UPDATED)
+                .setPackage(context.getPackageName());
+        context.sendBroadcast(dataUpdatedIntent);
+    }
 
     /**
      * Helper method to handle insertion of a new location in the weather database.

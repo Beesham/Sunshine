@@ -50,11 +50,12 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     private RecyclerView mForcastRecyclerView;
     private TextView mEmptyView;
-    private int mPosition = RecyclerView.NO_POSITION;
+    //private int mPosition = RecyclerView.NO_POSITION;
 
     private ArrayList<String> forcastAL;
     private ForecastAdapter mForecastAdapter;
     private boolean mHoldForTransition;
+    private long mInitialSelectedDate = -1;
 
     private static  final String SELECTED_KEY = "selected_position";
 
@@ -138,7 +139,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                         .onItemSelected(WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
                                 locationSetting, date), forecastAdapterViewHolder);
 
-                mPosition = forecastAdapterViewHolder.getAdapterPosition();
+                //mPosition = forecastAdapterViewHolder.getAdapterPosition();
             }
         }, mEmptyView, mChoiceMode);
 
@@ -187,8 +188,8 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
             }
         }
 
-        if(savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)){
-            mPosition = savedInstanceState.getInt(SELECTED_KEY);
+        if(savedInstanceState != null ){
+            mForecastAdapter.onRestoreInstanceState(savedInstanceState);
         }
 
         mForecastAdapter.setUseTodayLayout(mUseTodayLayout);
@@ -219,9 +220,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        if(mPosition != RecyclerView.NO_POSITION){
-            outState.putInt(SELECTED_KEY, mPosition);
-        }
+        mForecastAdapter.onRestoreInstanceState(outState);
         super.onSaveInstanceState(outState);
     }
 
@@ -353,9 +352,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 mEmptyView.setText(getString(R.string.empty_list) + "\n" + getString(R.string.no_connectivity));
             }
         }
-        if(mPosition != ListView.INVALID_POSITION){
-            mForcastRecyclerView.smoothScrollToPosition(mPosition);
-        }
+
         if(cursor.getCount() == 0) {
             getActivity().supportStartPostponedEnterTransition();
         }else{
@@ -367,7 +364,25 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                     if (mForcastRecyclerView.getChildCount() > 0) {
                         mForcastRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
                         int itemPosition = mForecastAdapter.getSelectedItemPosition();
+
+                        if ( RecyclerView.NO_POSITION == itemPosition && mInitialSelectedDate != -1){
+                            Cursor data = mForecastAdapter.getCursor();
+                            int count = data.getCount();
+                            int dataColumn = data.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_DATE);
+                            for(int i = 0; i < count; i++){
+                                data.moveToPosition(i);
+                                if(data.getLong(dataColumn) == mInitialSelectedDate){
+                                    itemPosition = i;
+                                    break;
+                                }
+                            }
+                        }
+
+
                         if ( RecyclerView.NO_POSITION == itemPosition ) itemPosition = 0;
+
+                        mForcastRecyclerView.smoothScrollToPosition(itemPosition);
+
                         RecyclerView.ViewHolder vh = mForcastRecyclerView.findViewHolderForAdapterPosition(itemPosition);
                         if ( null != vh && mAutoSelectView ) {
                             mForecastAdapter.selectView( vh );
@@ -382,6 +397,10 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
             });
 
         }
+    }
+
+    public void setInitialSelectedDate(long initialSelectedDate){
+        mInitialSelectedDate = initialSelectedDate;
     }
 
     @Override
